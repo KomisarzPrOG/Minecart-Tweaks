@@ -3,15 +3,15 @@
 	"id": "minecart_tweaks",
 	"version": "${version}",
 	"name": "Minecart Tweaks",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "Mod that hopes to change how Minecarts work for better",
 	"authors": [
-		"Me!"
+		"KomisarzPrOG"
 	],
 	"contact": {
 		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"sources": "https://github.com/KomisarzPrOG/Minecart-Tweaks"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/minecart_tweaks/icon.png",
 	"environment": "*",
 	"entrypoints": {
@@ -20,6 +20,9 @@
 		],
 		"fabric-datagen": [
 			"net.komisarzprog.minecart_tweaks.MinecartTweaksDataGenerator"
+		],
+		"client": [
+			"net.komisarzprog.minecart_tweaks.MinecartTweaksClient"
 		]
 	},
 	"mixins": [
