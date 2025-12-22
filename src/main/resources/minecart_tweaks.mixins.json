@@ -3,7 +3,7 @@
 	"package": "net.komisarzprog.minecart_tweaks.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"ExampleMixin"
+		"FurnaceMinecartEntityMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

@@ -11,6 +11,6 @@ public class MinecartTweaks implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-
+		System.out.println("[MinecartTweaks] loaded!");
 	}
 }
