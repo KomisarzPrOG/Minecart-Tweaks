@@ -1,8 +1,13 @@
 package net.komisarzprog.minecart_tweaks.mixin;
 
+import net.komisarzprog.minecart_tweaks.MinecartFuelHelper;
 import net.komisarzprog.minecart_tweaks.MinecartTweaksConfig;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.vehicle.FurnaceMinecartEntity;
+import net.minecraft.item.FuelRegistry;
+import net.minecraft.item.ItemStack;
+import net.minecraft.resource.featuretoggle.FeatureSet;
 import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.ChunkPos;
@@ -19,11 +24,18 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.Dictionary;
+
 @Mixin(FurnaceMinecartEntity.class)
 public abstract class FurnaceMinecartEntityMixin {
     @Shadow private int fuel;
     @Shadow public abstract boolean isLit();
 
+    @Shadow
+    protected abstract void initDataTracker(DataTracker.Builder builder);
+
+    @Shadow
+    public Vec3d pushVec;
     @Unique ChunkPos previousChunk;
     @Unique int maxFuel = MinecartTweaksConfig.furnaceBurnTime;
     @Unique int fuelPerItem = MinecartTweaksConfig.fuelPerItem;
@@ -37,7 +49,7 @@ public abstract class FurnaceMinecartEntityMixin {
         Entity self = (Entity)(Object)this;
         World world = self.getEntityWorld();
 
-        if(world instanceof ServerWorld server)
+        if(MinecartTweaksConfig.furnaceMinecartsLoadChunks && world instanceof ServerWorld server)
         {
             ChunkPos currentChunk = ChunkSectionPos.from(self).toChunkPos();
 
@@ -83,5 +95,30 @@ public abstract class FurnaceMinecartEntityMixin {
     private int minecarttweaks$increaseFuelPerItem(int original)
     {
         return fuelPerItem;
+    }
+
+    // * Allow every burnable item to fuel minecart
+    @Inject(method = "addFuel", at = @At("HEAD"), cancellable = true)
+    private void minecarttweaks$allowAllFuels(Vec3d velocity, ItemStack stack, CallbackInfoReturnable<Boolean> cir)
+    {
+        if(MinecartTweaksConfig.allowAllFuels && !stack.isEmpty())
+        {
+            Entity self = (Entity)(Object)this;
+            World world = self.getEntityWorld();
+
+            if(MinecartFuelHelper.isFuel(stack))
+            {
+                int addedFuel = (int)(MinecartFuelHelper.getFuelTicks(stack) * 2.25);
+                fuel += Math.min(addedFuel, maxFuel - fuel);
+
+                System.out.println(fuel);
+
+                if(fuel > 0)
+                    this.pushVec = self.getEntityPos().subtract(velocity).getHorizontal();
+
+                cir.setReturnValue(true);
+                cir.cancel();
+            }
+        }
     }
 }

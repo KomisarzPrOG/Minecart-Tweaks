@@ -12,6 +12,8 @@ public class MinecartTweaksConfig
 
     public static boolean furnaceMinecartsLoadChunks = true;
 
+    public static boolean allowAllFuels = true;
+
     public static double getFurnaceMinecartSpeed()
     {
         return Math.max(0.1, furnaceMinecartSpeed * 0.05);
