@@ -19,7 +19,7 @@ public class AbstractMinecartEntityMixin {
     @Inject(method = "getMaxSpeed", at = @At("RETURN"), cancellable = true)
     private void minecarttweaks$boostMaxSpeed(CallbackInfoReturnable<Double> cir)
     {
-        Vec3d velocity = ((FurnaceMinecartEntity)(Object)this).getVelocity();
+        Vec3d velocity = ((AbstractMinecartEntity)(Object)this).getVelocity();
         boolean isTurning = Math.abs(velocity.x) != 0 && Math.abs(velocity.z) != 0;
 
         if(!isTurning)
