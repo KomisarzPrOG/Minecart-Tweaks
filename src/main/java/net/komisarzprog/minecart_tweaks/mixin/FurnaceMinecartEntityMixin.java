@@ -4,12 +4,18 @@ import net.komisarzprog.minecart_tweaks.MinecartFuelHelper;
 import net.komisarzprog.minecart_tweaks.MinecartTweaksConfig;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.data.DataTracker;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.vehicle.FurnaceMinecartEntity;
-import net.minecraft.item.FuelRegistry;
+import net.minecraft.item.BucketItem;
 import net.minecraft.item.ItemStack;
-import net.minecraft.resource.featuretoggle.FeatureSet;
+import net.minecraft.item.Items;
 import net.minecraft.server.world.ChunkTicketType;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvent;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.ChunkSectionPos;
 import net.minecraft.util.math.Vec3d;
@@ -24,8 +30,6 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.Dictionary;
-
 @Mixin(FurnaceMinecartEntity.class)
 public abstract class FurnaceMinecartEntityMixin {
     @Shadow private int fuel;
@@ -36,6 +40,10 @@ public abstract class FurnaceMinecartEntityMixin {
 
     @Shadow
     public Vec3d pushVec;
+
+    @Shadow
+    public abstract boolean addFuel(Vec3d velocity, ItemStack stack);
+
     @Unique ChunkPos previousChunk;
     @Unique int maxFuel = MinecartTweaksConfig.furnaceBurnTime;
     @Unique int fuelPerItem = MinecartTweaksConfig.fuelPerItem;
@@ -104,7 +112,6 @@ public abstract class FurnaceMinecartEntityMixin {
         if(MinecartTweaksConfig.allowAllFuels && !stack.isEmpty())
         {
             Entity self = (Entity)(Object)this;
-            World world = self.getEntityWorld();
 
             if(MinecartFuelHelper.isFuel(stack))
             {
@@ -117,8 +124,35 @@ public abstract class FurnaceMinecartEntityMixin {
                     this.pushVec = self.getEntityPos().subtract(velocity).getHorizontal();
 
                 cir.setReturnValue(true);
-                cir.cancel();
             }
         }
+    }
+
+    // * Custom logic for interacting with Furnace Minecarts
+    @Inject(method = "interact", at = @At("HEAD"), cancellable = true)
+    private void minecarttweaks$interactWithAllFuels(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> info)
+    {
+        Entity self = (Entity)(Object)this;
+        World world = self.getEntityWorld();
+
+        ItemStack stack = player.getStackInHand(hand);
+        if(this.addFuel(player.getEntityPos(), stack))
+        {
+            if(stack.getItem() == Items.LAVA_BUCKET)
+            {
+                SoundEvent soundEvent = SoundEvents.ITEM_BUCKET_EMPTY_LAVA;
+
+                if(world.isClient()) world.playSound(player, player.getBlockPos(), soundEvent, SoundCategory.BLOCKS, 1.0f, 1.0f);
+
+                if(!player.isCreative()) player.getInventory().setStack(player.getInventory().getSelectedSlot(), BucketItem.getEmptiedStack(stack, player));
+            }
+            else
+            {
+                stack.decrementUnlessCreative(1, player);
+            }
+        }
+
+        info.setReturnValue(ActionResult.SUCCESS);
+        info.cancel();
     }
 }
