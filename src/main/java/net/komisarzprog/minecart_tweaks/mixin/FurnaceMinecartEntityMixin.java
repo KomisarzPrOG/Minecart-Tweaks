@@ -132,27 +132,29 @@ public abstract class FurnaceMinecartEntityMixin {
     @Inject(method = "interact", at = @At("HEAD"), cancellable = true)
     private void minecarttweaks$interactWithAllFuels(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> info)
     {
-        Entity self = (Entity)(Object)this;
-        World world = self.getEntityWorld();
-
-        ItemStack stack = player.getStackInHand(hand);
-        if(this.addFuel(player.getEntityPos(), stack))
+        if(MinecartTweaksConfig.allowAllFuels)
         {
-            if(stack.getItem() == Items.LAVA_BUCKET)
-            {
-                SoundEvent soundEvent = SoundEvents.ITEM_BUCKET_EMPTY_LAVA;
+            Entity self = (Entity)(Object)this;
+            World world = self.getEntityWorld();
 
-                if(world.isClient()) world.playSound(player, player.getBlockPos(), soundEvent, SoundCategory.BLOCKS, 1.0f, 1.0f);
-
-                if(!player.isCreative()) player.getInventory().setStack(player.getInventory().getSelectedSlot(), BucketItem.getEmptiedStack(stack, player));
-            }
-            else
+            ItemStack stack = player.getStackInHand(hand);
+            if(this.addFuel(player.getEntityPos(), stack))
             {
-                stack.decrementUnlessCreative(1, player);
+                if(stack.getItem() == Items.LAVA_BUCKET)
+                {
+                    SoundEvent soundEvent = SoundEvents.ITEM_BUCKET_EMPTY_LAVA;
+
+                    if(world.isClient()) world.playSound(player, player.getBlockPos(), soundEvent, SoundCategory.BLOCKS, 1.0f, 1.0f);
+
+                    if(!player.isCreative()) player.getInventory().setStack(player.getInventory().getSelectedSlot(), BucketItem.getEmptiedStack(stack, player));
+                }
+                else
+                {
+                    stack.decrementUnlessCreative(1, player);
+                }
             }
+
+            info.setReturnValue(ActionResult.SUCCESS);
         }
-
-        info.setReturnValue(ActionResult.SUCCESS);
-        info.cancel();
     }
 }
